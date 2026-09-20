@@ -8,8 +8,8 @@
 <link rel="icon" href="assets/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
-<!-- Link previews. After deploying, replace the two URLs below with your real
-     domain, e.g. https://shikascookies.com/assets/d_hero.jpg -->
+<!-- Link previews. After deploying, replace the two image URLs below with your
+     real domain, e.g. https://shikascookies.com/assets/d_hero.jpg -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Shika's — M&amp;M Gourmet Cookies">
 <meta property="og:description" content="Shika's — M&M gourmet cookies, baked to order in New York City. Browned butter, a forty-eight hour rest, flaky salt. Dozens from $75.">
@@ -291,7 +291,10 @@ h1,h2,h3{
 
 /* ---------- praise ---------- */
 .praise{padding-block:clamp(60px,8vw,104px);background:var(--panel);border-block:1px solid var(--hair)}
-.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(26px,4vw,52px);margin-top:clamp(30px,4vw,52px)}
+.quotes{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(28px,5vw,64px);
+  margin-top:clamp(30px,4vw,52px);max-width:860px;margin-inline:auto;
+}
 .quote{display:flex;flex-direction:column;gap:18px}
 .quote blockquote{
   margin:0;font-family:"Bodoni Moda",Didot,Georgia,serif;font-style:italic;font-weight:400;
@@ -394,6 +397,19 @@ h1,h2,h3{
 }
 .acts{display:flex;flex-direction:column;gap:11px}
 .acts .btn{width:100%}
+.acts .btn[disabled]{opacity:.55;cursor:default}
+.quiet-link{
+  text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bone-3);text-decoration:none;padding-top:4px;transition:color .2s ease;
+}
+.quiet-link:hover{color:var(--brass)}
+.formnote{
+  margin-top:14px;font-size:13px;line-height:1.6;color:var(--bone-2);
+  min-height:1.2em;letter-spacing:.02em;
+}
+.formnote.ok{color:var(--brass)}
+.formnote.bad{color:#E08A72}
+.hp{position:absolute;left:-9999px;opacity:0;height:0;width:0}
 .fine{font-size:12px;color:var(--bone-3);margin-top:18px;line-height:1.65;letter-spacing:.03em}
 @media (max-width:900px){.order-grid{grid-template-columns:1fr}.card-slip{position:static}}
 
@@ -509,7 +525,7 @@ h1,h2,h3{
         <p class="roman">III &middot; The Full Dozen</p>
         <h3>Grand <em>Douzaine</em></h3>
         <p class="amount">$75</p>
-        <p class="note">Twelve. Keep six, freeze six, and you are never more than ninety seconds from a warm cookie for the better part of a month.</p>
+        <p class="note">Twelve, in a single box. What a dozen is properly for &mdash; a table, a celebration, or a gift that requires no explaining.</p>
         <p class="spec">12 cookies &middot; boxed &middot; $21 below singles</p>
       </div>
     </div>
@@ -564,11 +580,6 @@ h1,h2,h3{
         <blockquote>&ldquo;Might be the best cookie I&rsquo;ve eva had. Not even a cookie guy.&rdquo;</blockquote>
         <p class="attr">First order &middot; Half dozen</p>
       </div>
-      <div class="quote">
-        <span class="gems tiny" aria-hidden="true"><i></i><i></i><i></i></span>
-        <blockquote>&ldquo;I froze the other six like you said. They did not survive the week.&rdquo;</blockquote>
-        <p class="attr">Standing order &middot; Full dozen</p>
-      </div>
     </div>
   </div>
 </section>
@@ -590,7 +601,7 @@ h1,h2,h3{
 <section class="list-sec">
   <div class="wrap">
     <p class="kicker">The List</p>
-    <h2>So the freezer <em>never runs dry.</em></h2>
+    <h2>Before a batch <em>sells out.</em></h2>
     <p class="sub">One note when a batch is released, first refusal on seasonal boxes, and advance notice before orders open. Twice a month at most.</p>
     <form class="list-form" id="clubForm" novalidate>
       <input id="clubEmail" type="email" placeholder="Your email" aria-label="Email address" autocomplete="email">
@@ -687,9 +698,12 @@ h1,h2,h3{
         <span class="val" id="total">$0</span>
       </div>
       <div class="acts">
-        <button class="btn solid" type="button" id="copyBtn">Copy the slip</button>
-        <a class="btn" id="mailBtn" href="#">Send by email</a>
+        <button class="btn solid" type="button" id="sendBtn">Send the order</button>
+        <button class="btn" type="button" id="copyBtn">Copy the slip</button>
+        <a class="quiet-link" id="mailBtn" href="#">or open it in your own email app</a>
       </div>
+      <p class="formnote" id="sendNote" role="status" aria-live="polite"></p>
+      <input type="checkbox" name="botcheck" id="botcheck" class="hp" tabindex="-1" autocomplete="off">
       <p class="fine">Delivery is quoted on confirmation. Settlement by Venmo, or in cash on collection.<br>Sooner still &mdash; text the slip to <a href="tel:+17868159291" style="color:var(--brass);text-decoration:none;white-space:nowrap">(786)&nbsp;815&#8209;9291</a>.</p>
     </aside>
   </div>
@@ -718,6 +732,26 @@ h1,h2,h3{
 (function(){
   "use strict";
 
+  /* ==================================================================
+     EMAIL DELIVERY  —  paste your Web3Forms access key below.
+
+     Get one free in about 30 seconds, no account needed:
+       1. Go to  https://web3forms.com
+       2. Enter  nehaissooawesome@gmail.com
+       3. The access key is emailed to you. Paste it between the
+          quotes below, replacing REPLACE_WITH_YOUR_ACCESS_KEY.
+
+     Until a real key is in place, both forms fall back to opening
+     the visitor's own email app instead — nothing silently fails.
+     ================================================================== */
+  var WEB3FORMS_KEY  = "REPLACE_WITH_YOUR_ACCESS_KEY";
+  var ENDPOINT       = "https://api.web3forms.com/submit";
+  var INBOX          = "nehaissooawesome@gmail.com";
+
+  function keyIsSet(){
+    return WEB3FORMS_KEY && WEB3FORMS_KEY.indexOf("REPLACE") === -1 && WEB3FORMS_KEY.length > 20;
+  }
+
   var ITEMS = {
     single: { label: "La Petite",       unit: "1 cookie",   price: 8  },
     half:   { label: "Half Dozen",      unit: "6 cookies",  price: 40 },
@@ -726,7 +760,31 @@ h1,h2,h3{
   var qty = { single: 0, half: 1, dozen: 0 };
 
   var $ = function(id){ return document.getElementById(id); };
-  var summaryEl = $("summary"), totalEl = $("total"), mailBtn = $("mailBtn"), copyBtn = $("copyBtn");
+  var summaryEl = $("summary"), totalEl = $("total"),
+      mailBtn = $("mailBtn"), copyBtn = $("copyBtn"),
+      sendBtn = $("sendBtn"), sendNote = $("sendNote");
+
+  function say(el, msg, kind){
+    el.textContent = msg;
+    el.className = "formnote" + (kind ? " " + kind : "");
+  }
+
+  /* POST to Web3Forms. Resolves on a confirmed success, rejects otherwise,
+     so every caller can fall back to the visitor's own mail app. */
+  function postForm(payload){
+    if (!keyIsSet()) return Promise.reject(new Error("no-key"));
+    payload.access_key = WEB3FORMS_KEY;
+    return fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(data){
+        if (r.ok && data && data.success) return data;
+        throw new Error((data && data.message) || ("HTTP " + r.status));
+      });
+    });
+  }
 
   var d = new Date(); d.setDate(d.getDate() + 10);
   $("f-date").value = d.toISOString().slice(0,10);
@@ -766,10 +824,59 @@ h1,h2,h3{
     var r = buildText();
     summaryEl.textContent = r.text;
     totalEl.textContent = money(r.total);
-    mailBtn.href = "mailto:nehaissooawesome@gmail.com?subject=" +
+    mailBtn.href = "mailto:" + INBOX + "?subject=" +
       encodeURIComponent("Order — " + (($("f-name").value || "").trim() || "new order")) +
       "&body=" + encodeURIComponent(r.text);
   }
+
+  sendBtn.addEventListener("click", function(){
+    var r = buildText();
+    var name    = ($("f-name").value || "").trim();
+    var contact = ($("f-contact").value || "").trim();
+
+    if (r.total === 0){
+      say(sendNote, "Choose at least one size before sending.", "bad"); return;
+    }
+    if (!name || !contact){
+      say(sendNote, "We need a name and a way to reach you.", "bad"); return;
+    }
+    if ($("botcheck") && $("botcheck").checked) return;
+
+    var lines = [];
+    Object.keys(ITEMS).forEach(function(k){
+      if (qty[k] > 0) lines.push(qty[k] + " × " + ITEMS[k].label);
+    });
+
+    var payload = {
+      subject:   "New cookie order — " + name + " — " + money(r.total),
+      from_name: "Shika's website",
+      Order:      lines.join(", "),
+      Total:      money(r.total),
+      Name:       name,
+      Contact:    contact,
+      Fulfilment: $("f-how").value,
+      Required:   $("f-date").value || "—",
+      Notes:      ($("f-note").value || "").trim() || "—",
+      Slip:       r.text,
+      botcheck:   ""
+    };
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contact)) payload.replyto = contact;
+
+    sendBtn.disabled = true;
+    var original = sendBtn.textContent;
+    sendBtn.textContent = "Sending…";
+    say(sendNote, "", "");
+
+    postForm(payload).then(function(){
+      sendBtn.textContent = "Order sent";
+      say(sendNote, "Sent. We'll confirm by text within the day — keep an eye on your phone.", "ok");
+    }).catch(function(){
+      sendBtn.disabled = false;
+      sendBtn.textContent = original;
+      say(sendNote, "We couldn't send it from here — opening your email app with the order filled in instead.", "bad");
+      window.location.href = mailBtn.href;
+    });
+  });
 
   document.querySelectorAll("[data-step]").forEach(function(b){
     b.addEventListener("click", function(){
@@ -810,12 +917,31 @@ h1,h2,h3{
   $("clubForm").addEventListener("submit", function(e){
     e.preventDefault();
     var v = ($("clubEmail").value || "").trim(), note = $("clubNote");
+    var btn = $("clubForm").querySelector("button");
+
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){
       note.textContent = "That address doesn't look right — please check it.";
       return;
     }
-    note.textContent = "You're on the list. We'll write when the next batch is released.";
-    $("clubEmail").value = "";
+
+    var original = btn.textContent;
+    btn.disabled = true; btn.textContent = "Sending…";
+    note.textContent = "";
+
+    postForm({
+      subject:   "The List — new signup",
+      from_name: "Shika's website",
+      Email:     v,
+      replyto:   v,
+      botcheck:  ""
+    }).then(function(){
+      btn.textContent = "Requested";
+      note.textContent = "You're on the list. We'll write when the next batch is released.";
+      $("clubEmail").value = "";
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = original;
+      note.textContent = "We couldn't add you from here — email " + INBOX + " and we'll add you by hand.";
+    });
   });
 
   render();
